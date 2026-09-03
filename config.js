@@ -24,7 +24,7 @@
  *     (Deploy → Manage deployments → Edit ✏️ → Version: New version → Deploy).
  *     Menyimpan berkas saja TIDAK memperbarui aplikasi yang sedang berjalan.
  */
-const GAS_URL = 'GANTI_DENGAN_URL_EXEC_ANDA';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyYHOYgicQz4V9NbrlLp3oIWPrg05nO-_LeUF6OI37vxpXz9YEGBOPjUgVzQUoEPuXblw/exec';
 
 
 /* --------------------------------------------------------------------------
