@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="EduPortal LMS — Learning Management System berbasis Google Workspace. Kelola materi, tugas, absensi, penilaian, dan jadwal dalam satu portal.">
+  <meta name="theme-color" content="#022448">
+  <title>EduPortal LMS</title>
+
+  <!-- Ikon tab. Ganti favicon.svg dengan logo institusi bila diinginkan. -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='5' fill='%23022448'/><path d='M20 9.5 12 5.5 4 9.5l8 4 8-4Z' fill='none' stroke='%23feae2c' stroke-width='1.6' stroke-linejoin='round'/><path d='M7 11v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-4' fill='none' stroke='%23feae2c' stroke-width='1.6' stroke-linecap='round'/></svg>">
+
+  <!-- Tipografi: Plus Jakarta Sans (headline) + Inter (body) sesuai DESIGN.md -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Menghangatkan koneksi ke backend sebelum permintaan pertama dikirim -->
+  <link rel="preconnect" href="https://script.google.com">
+  <link rel="preconnect" href="https://script.googleusercontent.com">
+
+  <!--
+    ARSITEKTUR v2.0 — GAS-PRO-API
+    Berkas ini dilayani sebagai HTML statis (GitHub Pages), BUKAN oleh
+    HtmlService. Karena itu tidak ada lagi scriptlet <?!= include(...) ?>:
+    stylesheet dan skrip dimuat sebagai berkas biasa.
+
+    Konsekuensi terpenting: halaman ini berjalan di origin-nya sendiri,
+    bukan di dalam iframe bersarang milik Google. Mikrofon, kamera, dan
+    geolokasi karenanya berfungsi normal.
+  -->
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     A. SPLASH / LOADING AWAL
+     ══════════════════════════════════════════════════════════════════ -->
+<div id="bootOverlay" class="boot-overlay">
+  <div class="boot-mark">
+    <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/>
+    </svg>
+  </div>
+  <div class="boot-title">EduPortal</div>
+  <div class="boot-sub">Learning Management System</div>
+  <div class="boot-bar" role="progressbar" aria-label="Memuat aplikasi"><span></span></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     B. KERANGKA APLIKASI (muncul setelah login)
+     ══════════════════════════════════════════════════════════════════ -->
+<div id="appShell" class="app-shell" hidden>
+
+  <!-- Backdrop sidebar mobile -->
+  <div id="navBackdrop" class="nav-backdrop" onclick="toggleSidebar(false)" hidden></div>
+
+  <!-- ---------- SIDEBAR ---------- -->
+  <aside id="sidebar" class="sidebar" aria-label="Navigasi utama">
+    <div class="sidebar-brand">
+      <div class="brand-mark" id="brandMark">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name" id="brandName">EduPortal</span>
+        <span class="brand-sub" id="brandSub">LMS Hub</span>
+      </div>
+      <button class="icon-btn sidebar-close" onclick="toggleSidebar(false)" aria-label="Tutup menu">
+        <i data-icon="x"></i>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebarNav" aria-label="Menu">
+      <!-- Diisi dinamis oleh renderNavigation() -->
+    </nav>
+
+    <div class="sidebar-foot">
+      <button class="btn btn-accent btn-block" onclick="openSwitchPortal()">
+        <i data-icon="repeat"></i><span>Ganti Portal</span>
+      </button>
+      <a class="nav-link nav-link-sm" href="javascript:void(0)" onclick="navigateTo('bantuan')">
+        <i data-icon="help-circle"></i><span>Pusat Bantuan</span>
+      </a>
+      <a class="nav-link nav-link-sm nav-danger" href="javascript:void(0)" onclick="handleLogout()">
+        <i data-icon="log-out"></i><span>Keluar</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ---------- AREA UTAMA ---------- -->
+  <div class="main-wrap">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <button class="icon-btn topbar-burger" onclick="toggleSidebar(true)" aria-label="Buka menu">
+        <i data-icon="menu"></i>
+      </button>
+
+      <h1 class="topbar-title" id="topbarTitle">Dashboard</h1>
+
+      <div class="topbar-search">
+        <i data-icon="search" class="ts-icon"></i>
+        <input type="search" id="globalSearch" placeholder="Cari materi, tugas, siswa…"
+               aria-label="Pencarian global" autocomplete="off"
+               oninput="handleGlobalSearch(this.value)">
+        <div id="searchResults" class="search-results" hidden></div>
+      </div>
+
+      <nav class="topbar-links" aria-label="Tautan cepat">
+        <a href="javascript:void(0)" onclick="navigateTo('jadwal')">Jadwal Saya</a>
+        <a href="javascript:void(0)" onclick="navigateTo('resources')">Sumber Daya</a>
+      </nav>
+
+      <div class="topbar-actions">
+        <button class="btn btn-primary btn-sm topbar-upload" id="btnQuickUpload" onclick="quickUpload()">
+          <i data-icon="upload"></i><span>Unggah</span>
+        </button>
+        <button class="icon-btn" onclick="toggleTheme()" aria-label="Ganti mode terang/gelap" id="themeBtn">
+          <i data-icon="moon"></i>
+        </button>
+        <button class="icon-btn notif-btn" onclick="openNotifikasi()" aria-label="Notifikasi">
+          <i data-icon="bell"></i>
+          <span class="notif-dot" id="notifDot" hidden></span>
+        </button>
+        <button class="avatar-btn" onclick="navigateTo('profil')" aria-label="Profil saya">
+          <span class="avatar" id="topbarAvatar">?</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- KONTEN SPA — seluruh halaman dirender ke sini tanpa reload -->
+    <main class="main-content" id="mainContent" tabindex="-1">
+      <div id="app-container"></div>
+    </main>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     C. HALAMAN LOGIN (di luar shell)
+     ══════════════════════════════════════════════════════════════════ -->
+<div id="authScreen" class="auth-screen" hidden>
+  <div class="auth-card-wrap">
+    <div class="auth-logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/>
+      </svg>
+    </div>
+    <h1 class="auth-title">EduPortal</h1>
+    <p class="auth-sub">Learning Management System</p>
+
+    <div class="auth-card">
+      <!--
+        Panel galat koneksi (v2.0). Karena frontend dan backend kini terpisah,
+        kegagalan "tidak bisa menghubungi server" adalah kelas galat baru yang
+        tidak pernah ada di versi iframe. Dijelaskan dengan langkah perbaikan
+        konkret, bukan sekadar pesan merah.
+      -->
+      <div id="koneksiGalat" class="koneksi-galat" hidden></div>
+
+      <div id="authAlert" class="alert alert-error" hidden>
+        <i data-icon="alert-circle"></i>
+        <div>
+          <strong id="authAlertTitle">Autentikasi Gagal</strong>
+          <p id="authAlertMsg"></p>
+        </div>
+      </div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)" novalidate>
+        <div class="field">
+          <label class="label" for="loginEmail">Alamat Email</label>
+          <div class="input-icon">
+            <i data-icon="mail"></i>
+            <input type="email" id="loginEmail" class="input" placeholder="nama@institusi.ac.id"
+                   autocomplete="username" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label class="label" for="loginPassword">Kata Sandi</label>
+            <a href="javascript:void(0)" class="link-sm" onclick="lupaSandi()">Lupa kata sandi?</a>
+          </div>
+          <div class="input-icon">
+            <i data-icon="lock"></i>
+            <input type="password" id="loginPassword" class="input" placeholder="••••••••"
+                   autocomplete="current-password" required>
+            <button type="button" class="input-suffix" onclick="togglePassword()"
+                    aria-label="Tampilkan kata sandi"><i data-icon="eye"></i></button>
+          </div>
+        </div>
+
+        <label class="checkbox">
+          <input type="checkbox" id="rememberEmail"> <span>Ingat email saya di perangkat ini</span>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg" id="loginBtn">
+          <i data-icon="log-in"></i><span>Masuk ke Portal</span>
+        </button>
+      </form>
+
+      <!-- Blok akun demo. Dikendalikan APP_CONFIG.tampilkanAkunDemo di config.js;
+           setel false sebelum go-live. -->
+      <div class="auth-demo" id="authDemo">
+        <p class="auth-demo-title">Akun demo (klik untuk mengisi otomatis)</p>
+        <div class="demo-chips">
+          <button type="button" class="chip" onclick="isiDemo('admin@eduportal.id','admin123')">Super Admin</button>
+          <button type="button" class="chip" onclick="isiDemo('akademik@eduportal.id','akademik123')">Tim Akademik</button>
+          <button type="button" class="chip" onclick="isiDemo('dosen@eduportal.id','dosen123')">Dosen/Guru</button>
+          <button type="button" class="chip" onclick="isiDemo('siswa@eduportal.id','siswa123')">Siswa/Mahasiswa</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="auth-foot">
+      © <span id="authYear"></span> EduPortal LMS · Berbasis Google Workspace
+      <br>
+      <span class="api-status" id="apiStatus" title="Status sambungan ke backend Apps Script">
+        <span class="dot-api"></span><span id="apiStatusText">Memeriksa koneksi…</span>
+      </span>
+    </p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     D. KOMPONEN GLOBAL: Modal, Toast, Loading
+     ══════════════════════════════════════════════════════════════════ -->
+<div id="modalRoot" class="modal-root" hidden role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-backdrop" onclick="closeModal()"></div>
+  <div class="modal" id="modalBox">
+    <header class="modal-head">
+      <h2 id="modalTitle">Judul</h2>
+      <button class="icon-btn" onclick="closeModal()" aria-label="Tutup"><i data-icon="x"></i></button>
+    </header>
+    <div class="modal-body" id="modalBody"></div>
+    <footer class="modal-foot" id="modalFoot"></footer>
+  </div>
+</div>
+
+<div id="toastRoot" class="toast-root" role="status" aria-live="polite"></div>
+
+<div id="loadingBar" class="loading-bar" hidden><span></span></div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     E. PUSTAKA EKSTERNAL (CDN)
+     ══════════════════════════════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<!-- html5-qrcode kini benar-benar terpakai: kamera berfungsi di luar iframe GAS -->
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<!-- Pembaca berkas Excel/CSV untuk fitur Impor Data massal -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     F. APLIKASI
+     Urutan WAJIB: config → app (inti + jembatan API) → pages (halaman).
+     pages.js mendaftarkan dirinya ke registry PAGES milik app.js.
+     ══════════════════════════════════════════════════════════════════ -->
+<script src="./js/config.js"></script>
+<script src="./js/app.js"></script>
+<script src="./js/pages.js"></script>
+
+</body>
+</html>
