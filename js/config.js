@@ -36,7 +36,7 @@ const APP_CONFIG = {
   namaApp: 'EduPortal LMS',
 
   /** Versi frontend — tampil di Pusat Bantuan untuk kebutuhan dukungan teknis. */
-  versi: '2.1',
+  versi: '2.0',
 
   /**
    * Batas waktu tunggu tiap permintaan ke backend (milidetik).

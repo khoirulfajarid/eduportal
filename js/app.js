@@ -125,14 +125,7 @@ const ICONS = {
   'inbox':'<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z"/>',
   'grid':'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
   'microscope':'<path d="M6 18h8M3 22h18M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2ZM12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/>',
-  'sparkles':'m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z',
-  /* --- Modul Ujian & kartu QR (v2.1) --- */
-  'notebook-pen':'<path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h8"/><path d="M2 6h4M2 10h4M2 14h4M2 18h4"/><path d="M18.4 8.6a2 2 0 1 1 2.8 2.8L17 15.6l-3 .8.8-3z"/>',
-  'timer':'<path d="M10 2h4M12 14l3-3"/><circle cx="12" cy="14" r="8"/>',
-  'ban':'<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
-  'scan-line':'<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/>',
-  'printer':'<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/>',
-  'shuffle':'<path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>'
+  'sparkles':'m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z'
 };
 
 function svgIcon(name, size) {
@@ -265,16 +258,8 @@ function api(fn) {
 }
 
 /**
- * Permintaan latar belakang — tanpa bilah pemuatan dan tanpa percobaan ulang.
- * Dipakai untuk sinkronisasi diam-diam (optimistic UI) dan penyimpanan
- * otomatis jawaban ujian.
- *
- * Mengembalikan Promise yang SELALU ter-resolve, tidak pernah ter-reject:
- * kegagalan jaringan dikemas menjadi objek respons gagal biasa. Dengan
- * begitu pemanggil yang ingin tahu hasilnya cukup menulis `.then(res => …)`
- * tanpa wajib memasang `.catch`, sementara pemanggil lama yang mengabaikan
- * nilai kembaliannya tetap berjalan seperti semula — tanpa memicu
- * unhandled rejection.
+ * Fire & forget — dipakai untuk sinkronisasi latar belakang (optimistic UI).
+ * Kegagalan sengaja tidak mengganggu pengguna, hanya dicatat di console.
  */
 function apiSilent(fn) {
   const semua = Array.prototype.slice.call(arguments, 1);
@@ -282,11 +267,8 @@ function apiSilent(fn) {
   const token = tanpaToken ? '' : (semua[0] || '');
   const args  = tanpaToken ? semua : semua.slice(1);
 
-  return kirimPermintaan({ action: fn, token: token, args: args }, { diam: true })
-    .catch(function (e) {
-      console.warn('Sync gagal (' + fn + '):', e && e.message);
-      return { success: false, data: null, message: (e && e.message) || 'Permintaan gagal.' };
-    });
+  kirimPermintaan({ action: fn, token: token, args: args }, { diam: true })
+    .catch(function (e) { console.warn('Sync gagal (' + fn + '):', e && e.message); });
 }
 
 /**
@@ -771,10 +753,7 @@ const MENU = {
     { id: 'admin-pengguna',  ikon: 'users',            label: 'Pengguna' },
     { id: 'admin-siswa',     ikon: 'graduation-cap',   label: 'Siswa/Mahasiswa' },
     { id: 'admin-jadwal',    ikon: 'calendar',         label: 'Jadwal' },
-    { id: 'kartu-qr',        ikon: 'qr-code',          label: 'Kartu QR & Absensi' },
     { grup: 'Akademik' },
-    { id: 'dosen-ujian',     ikon: 'notebook-pen',     label: 'Ujian' },
-    { id: 'dosen-bank-soal', ikon: 'library',          label: 'Bank Soal' },
     { id: 'laporan',         ikon: 'bar-chart',        label: 'Laporan' },
     { id: 'admin-spp',       ikon: 'wallet',           label: 'Manajemen Tagihan', fitur: 'spp' },
     { id: 'admin-notifikasi',ikon: 'megaphone',        label: 'Notifikasi' },
@@ -788,9 +767,6 @@ const MENU = {
     { id: 'akademik-riwayat',   ikon: 'clock',            label: 'Riwayat Validasi' },
     { grup: 'Akademik' },
     { id: 'akademik-remedial',  ikon: 'refresh',          label: 'Remedial & Ulang' },
-    { id: 'dosen-ujian',        ikon: 'notebook-pen',     label: 'Ujian' },
-    { id: 'dosen-bank-soal',    ikon: 'library',          label: 'Bank Soal' },
-    { id: 'kartu-qr',           ikon: 'qr-code',          label: 'Kartu QR & Absensi' },
     { id: 'laporan',            ikon: 'bar-chart',        label: 'Laporan Akademik' },
     { id: 'profil',             ikon: 'user',             label: 'Profil Saya' }
   ],
@@ -800,12 +776,9 @@ const MENU = {
     { id: 'dosen-kelas',     ikon: 'book-open',        label: 'Kelas Saya' },
     { id: 'dosen-materi',    ikon: 'folder',           label: 'Materi' },
     { id: 'dosen-tugas',     ikon: 'clipboard-list',   label: 'Tugas & Quiz' },
-    { id: 'dosen-ujian',     ikon: 'notebook-pen',     label: 'Ujian' },
-    { id: 'dosen-bank-soal', ikon: 'library',          label: 'Bank Soal' },
     { id: 'rekaman',         ikon: 'mic',              label: 'Rekam Pertemuan' },
     { grup: 'Penilaian' },
     { id: 'dosen-absensi',   ikon: 'calendar-check',   label: 'Absensi' },
-    { id: 'kartu-qr',        ikon: 'qr-code',          label: 'Kartu QR & Absensi' },
     { id: 'dosen-nilai',     ikon: 'star',             label: 'Input Nilai' },
     { id: 'laporan',         ikon: 'bar-chart',        label: 'Laporan Kelas' },
     { id: 'profil',          ikon: 'user',             label: 'Profil Saya' }
@@ -815,11 +788,9 @@ const MENU = {
     { id: 'siswa-dashboard', ikon: 'layout-dashboard', label: 'Dashboard' },
     { id: 'siswa-kursus',    ikon: 'book-open',        label: 'Portal Belajar' },
     { id: 'siswa-tugas',     ikon: 'clipboard-list',   label: 'Tugas & Quiz', badge: 'tugasBelum' },
-    { id: 'siswa-ujian',     ikon: 'notebook-pen',     label: 'Ujian' },
     { id: 'jadwal',          ikon: 'calendar',         label: 'Jadwal Saya' },
     { grup: 'Akademik' },
     { id: 'siswa-absensi',   ikon: 'calendar-check',   label: 'Absensi Saya' },
-    { id: 'kartu-qr',        ikon: 'qr-code',          label: 'Kartu QR Saya' },
     { id: 'siswa-nilai',     ikon: 'award',            label: 'Nilai & Transkrip' },
     { id: 'rekaman',         ikon: 'mic',              label: 'Rekam Pertemuan', ketuaOnly: true },
     { id: 'siswa-spp',       ikon: 'wallet',           label: 'Status Tagihan', fitur: 'spp' },
@@ -875,9 +846,6 @@ function navigateTo(pageId, opsi) {
     delete AppState.charts[k];
   });
   hentikanRekamanJikaAda(pageId);
-  /* Hentikan timer & pengawasan ujian bila pengguna meninggalkan halaman
-     pengerjaan — tanpa ini, pindah menu akan tercatat sebagai pelanggaran. */
-  if (typeof bersihkanUjianJikaAda === 'function') bersihkanUjianJikaAda(pageId);
 
   AppState.currentPage = pageId;
   AppState.pageCtx = o.ctx || {};
@@ -1877,12 +1845,7 @@ const JUDUL_HALAMAN = {
   'profil': 'Profil Saya', 'pengaturan': 'Pengaturan Sistem', 'jadwal': 'Jadwal',
   'laporan': 'Laporan & Monitoring', 'rekaman': 'Rekam Pertemuan',
   'bantuan': 'Pusat Bantuan', 'resources': 'Sumber Daya',
-  'dosen-kelas-detail': 'Detail Kelas', 'siswa-kursus-detail': 'Detail Mata Pelajaran',
-  /* v2.1 */
-  'dosen-ujian': 'Ujian', 'dosen-bank-soal': 'Bank Soal',
-  'dosen-ujian-hasil': 'Hasil & Pengawasan Ujian',
-  'siswa-ujian': 'Ujian', 'siswa-ujian-kerjakan': 'Sedang Mengerjakan Ujian',
-  'kartu-qr': 'Kartu QR & Absensi'
+  'dosen-kelas-detail': 'Detail Kelas', 'siswa-kursus-detail': 'Detail Mata Pelajaran'
 };
 
 document.addEventListener('DOMContentLoaded', function () {

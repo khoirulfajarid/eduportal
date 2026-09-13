@@ -3,7 +3,7 @@
 Learning Management System berbasis **Google Workspace**, dengan frontend statis
 dan Google Apps Script sebagai REST API.
 
-> **Repositori ini berisi frontend saja.** Backend-nya berupa tiga berkas
+> **Repositori ini berisi frontend saja.** Backend-nya berupa dua berkas
 > `.gs` yang ditempel ke proyek Google Apps Script — lihat
 > [PANDUAN_INSTALASI_V2.md](./PANDUAN_INSTALASI_V2.md).
 
@@ -21,10 +21,9 @@ GitHub Pages  ← repositori ini (HTML/CSS/JS murni, tanpa build step)
    │  { action, token, args:[…] }  →  { success, data, message }
    ▼
 Google Apps Script Web App  /exec
-   Kode.gs · Modul.gs · Ujian.gs
    │
    ▼
-Google Sheets (37 sheet) · Drive · Gmail
+Google Sheets (32 sheet) · Drive · Gmail
 ```
 
 Tidak ada iframe, tidak ada `google.script.run`, tidak ada `HtmlService`.
@@ -39,7 +38,7 @@ Tidak ada iframe, tidak ada `google.script.run`, tidak ada `HtmlService`.
 | `css/style.css` | Design system *Academic Prestige* — token warna terang/gelap, komponen, responsif |
 | `js/config.js` | **Satu-satunya berkas yang perlu Anda edit.** Berisi `GAS_URL` |
 | `js/app.js` | Inti SPA: state, router, jembatan `fetch()` ke API, tabel, chart, ikon, perekam |
-| `js/pages.js` | Seluruh halaman untuk 4 peran (Super Admin, Tim Akademik, Dosen, Siswa), termasuk modul ujian & kartu QR |
+| `js/pages.js` | Seluruh halaman untuk 4 peran (Super Admin, Tim Akademik, Dosen, Siswa) |
 | `404.html` | Mengembalikan alamat keliru ke aplikasi |
 | `.nojekyll` | Mencegah GitHub Pages memproses berkas lewat Jekyll |
 
@@ -95,34 +94,6 @@ tetap berfungsi meski tanpa HTTPS.
 
 ---
 
-## Yang Baru di Versi 2.1
-
-### Modul Ujian Daring
-Bank soal yang dapat dipakai ulang, tiga jenis soal (pilihan ganda, uraian,
-unggah berkas), hitung mundur yang dijaga server, pengacakan soal dan opsi per
-siswa, auto-koreksi pilihan ganda, dan penilaian manual untuk butir uraian.
-
-Pengawasan kecurangan: berpindah tab tercatat sebagai pelanggaran — peringatan
-pada yang pertama, blokir pada yang kedua. Hitungannya disimpan server, jadi
-memuat ulang halaman tidak menghapusnya. Dosen membuka blokir dari menu
-**Ujian → Hasil**, lengkap dengan tambahan waktu agar siswa tidak dirugikan
-dua kali.
-
-### Kartu QR Siswa
-Setiap siswa memperoleh token QR permanen secara otomatis. Dapat diunduh,
-dicetak satu per satu, atau dicetak sekelas sekaligus.
-
-### Aturan Metode Absensi
-Tiap siswa dapat diwajibkan hadir hanya lewat GPS, hanya lewat QR, atau bebas
-memilih. Berlaku untuk status Hadir; pengajuan Sakit dan Izin dengan bukti
-tetap terbuka bagi semua.
-
-### Reset Akun Demo
-Fungsi `resetAkunDemo()` di editor Apps Script mengembalikan kata sandi keempat
-akun demo ke bawaan — berguna setelah pelatihan. Akun sungguhan tidak tersentuh.
-
----
-
 ## Yang Berubah dari Versi 1.1
 
 Versi 1.1 menjalankan seluruh aplikasi di dalam Apps Script, yang berarti
@@ -171,14 +142,6 @@ pesannya sudah menyebutkan langkah perbaikan. Ringkasan penyebab tersering:
   seluruh aksi terautentikasi memakai POST.
 - Backend hanya mengeksekusi aksi yang terdaftar di `ACTION_WHITELIST`;
   nama fungsi sembarang dari klien tidak akan pernah dijalankan.
-- Pembacaan data mentah dijaga `RBAC_READ` dengan aturan **tertutup secara
-  bawaan**: sheet yang tidak terdaftar tidak dapat dibaca peran mana pun.
-  `Bank_Soal` (memuat kunci jawaban) tertutup bagi siswa, dan `Pengguna`
-  (memuat hash kata sandi) tertutup bagi semua peran.
-- Kunci jawaban **tidak pernah** dikirim ke peramban siswa: butir soal disusun
-  ulang kolom demi kolom di server, bukan disalin lalu dihapus kuncinya.
-- Batas waktu ujian dihitung server; jam yang dimajukan di komputer siswa tidak
-  menambah waktu sedetik pun.
 - Setiap fungsi backend memvalidasi sesi (`requireSession`) dan hak peran (`RBAC_WRITE`)
   sebelum menulis apa pun.
 - `getInitialAppData()` menyaring data per peran: siswa hanya menerima datanya sendiri,

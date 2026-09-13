@@ -59,20 +59,13 @@ dalam hal logikanya.
 1. Buka **https://script.google.com** → **Proyek Baru**
 2. Ganti nama proyek menjadi `EduPortal LMS API`
 
-### A2. Tempel tiga berkas kode
+### A2. Tempel dua berkas kode
 1. Ganti seluruh isi `Code.gs` bawaan dengan isi **`Kode.gs`**, lalu ubah nama berkasnya menjadi **`Kode`**
 2. **File → New → Script file** → beri nama **`Modul`** → tempel seluruh isi **`Modul.gs`**
-3. **File → New → Script file** → beri nama **`Ujian`** → tempel seluruh isi **`Ujian.gs`**
 
-| Berkas | Isi | Baris |
-|---|---|---|
-| `Kode.gs` | Router REST, autentikasi, hak akses, mesin CRUD, cache | ±2.100 |
-| `Modul.gs` | Nilai, absensi, kartu QR, tagihan, notifikasi, impor | ±2.700 |
-| `Ujian.gs` | Bank soal, penyusunan ujian, pengerjaan, pengawasan, koreksi | ±1.050 |
-
-> Tidak ada berkas HTML sama sekali — itulah inti perubahan arsitektur ini.
-> Bila Anda migrasi dari v1.1, hapus berkas `Index`, `Stylesheet`,
-> `JavaScript`, dan `Pages` dari proyek (lihat Bagian E).
+> Hanya dua berkas. Tidak ada berkas HTML sama sekali — itulah inti perubahan
+> arsitektur ini. Bila Anda migrasi dari v1.1, hapus berkas `Index`,
+> `Stylesheet`, `JavaScript`, dan `Pages` dari proyek (lihat Bagian E).
 
 ### A3. Jalankan setup — **hanya sekali**
 1. Pada dropdown fungsi, pilih **`setupAppEnvironment`**
@@ -241,126 +234,6 @@ Di Apps Script, buka **Triggers (⏰) → Add Trigger**:
 | `bersihkanSesiKedaluwarsa` | Day timer | 01.00–02.00 |
 | `warmupCache` | Hour timer | Tiap 6 jam (mempercepat akses pertama) |
 
-### Fungsi pemeliharaan (dijalankan manual bila perlu)
-
-Pilih dari dropdown **▶ Run** di editor Apps Script:
-
-| Fungsi | Kegunaan |
-|---|---|
-| `resetAkunDemo` | Mengembalikan kata sandi keempat akun demo ke bawaan, membuka akun yang terkunci, dan mengakhiri seluruh sesi aktifnya. Akun dosen & mahasiswa sungguhan **tidak** tersentuh. |
-| `backfillKartuQR` | Menerbitkan kartu QR untuk siswa yang belum punya. Aman dijalankan berulang — token yang sudah terbit tidak pernah berubah, sehingga kartu yang sudah dicetak tetap berlaku. |
-
-> `resetAkunDemo` berguna setelah pelatihan, ketika kata sandi demo terlanjur
-> diganti peserta. Hasilnya tercetak lengkap di **Execution log**.
-
----
-
-# D2. Modul Ujian Daring (v2.1)
-
-### Urutan penggunaan
-
-```
-Bank Soal → Buat Ujian → Terbitkan → Siswa mengerjakan → Koreksi → Nilai terbit
-```
-
-**1. Susun bank soal.** Menu **Bank Soal** → *Tambah Soal*, atau *Impor Excel*
-untuk memasukkan puluhan soal sekaligus. Tiga jenis tersedia:
-
-| Jenis | Dinilai | Catatan |
-|---|---|---|
-| Pilihan Ganda | Otomatis | 2–8 opsi; tandai satu sebagai kunci |
-| Uraian | Manual oleh dosen | Siswa mengetik jawaban panjang |
-| Unggah Berkas | Manual oleh dosen | Maks 2 MB per berkas |
-
-> Soal disimpan **terpisah** dari ujian, sehingga dapat dipakai ulang semester
-> berikutnya tanpa mengetik ulang. Dosen pengampu mata kuliah yang sama berbagi
-> bank soal — ini disengaja, karena tim pengampu lazim menyusunnya bersama.
-
-**2. Buat ujian.** Menu **Ujian** → *Buat Ujian*. Formulirnya dua tab:
-*Pengaturan* (judul, kelas, durasi, jendela waktu, pengacakan) dan
-*Pilih Soal* (ambil dari bank soal, atur bobot tiap butir).
-
-**3. Terbitkan.** Ujian berstatus **Draf** tidak terlihat siswa. Tekan
-*Terbitkan* bila sudah siap.
-
-### Pengawasan kecurangan
-
-Saat mengerjakan, siswa yang **berpindah tab atau memperkecil jendela** tercatat
-melanggar:
-
-| Pelanggaran | Akibat |
-|---|---|
-| ke-1 | Peringatan merah di layar; ujian dapat dilanjutkan |
-| ke-2 | Akses diblokir; siswa harus menghubungi dosen |
-
-Ambang ini dapat diubah menjadi 1 (langsung blokir) atau 3 (dua peringatan)
-saat membuat ujian. Klik kanan dan salin-tempel isi halaman juga dinonaktifkan,
-tetapi **tidak** dihitung sebagai pelanggaran.
-
-**Membuka blokir:** menu **Ujian → Hasil**, panel *Siswa Terblokir* muncul di
-bagian atas. Tekan *Buka Akses*, tentukan tambahan waktu, dan hitungan
-pelanggaran disetel ulang ke nol.
-
-> Jawaban yang sempat tersimpan **tidak hilang** saat siswa diblokir. Butir
-> pilihan gandanya bahkan tetap dikoreksi, sehingga Anda dapat melihat sejauh
-> mana ia sudah mengerjakan sebelum memutuskan.
-
-### Batas yang jujur perlu diketahui
-
-Pengawasan ini berjalan di peramban siswa. Ia mendeteksi perpindahan tab dengan
-andal, dan hitungannya dijaga server sehingga memuat ulang halaman tidak
-menghapus pelanggaran. Namun aplikasi web **tidak dapat** melihat apa yang
-terjadi di luar perambannya: ponsel kedua, komputer lain, catatan di meja, atau
-orang lain di ruangan yang sama berada di luar jangkauannya sepenuhnya.
-
-Siswa yang benar-benar paham teknis juga dapat memanggil API secara langsung
-tanpa melalui halaman ujian. Yang dijaga server — dan tidak dapat diakali dari
-sisi klien — adalah: **kunci jawaban tidak pernah dikirim** ke peramban siswa,
-**batas waktu dihitung server**, dan **sesi milik siswa lain tidak dapat
-disentuh**.
-
-Karena itu modul ini tepat untuk kuis harian, ujian daring dengan pengawasan
-video terpisah, atau ujian luring di laboratorium tempat layar terlihat
-pengawas. Untuk ujian bertaruhan tinggi tanpa pengawas manusia, tidak ada
-aplikasi web mana pun yang dapat menjamin kejujurannya.
-
----
-
-# D3. Kartu QR & Aturan Absensi (v2.1)
-
-### Kartu QR
-
-Setiap siswa otomatis memperoleh token QR permanen saat datanya ditambahkan —
-baik satu per satu maupun lewat impor Excel. Token tidak pernah berubah
-sepanjang masa studi, sehingga kartu yang sudah dicetak tetap berlaku.
-
-- **Siswa** melihatnya di menu **Kartu QR Saya** — dapat diunduh sebagai PNG
-  atau dicetak.
-- **Dosen & staf** membuka **Kartu QR & Absensi** → pilih kelas → *Cetak Semua
-  Kartu* untuk mencetak sekelas sekaligus, empat kartu per baris.
-- Bila kartu hilang atau tokennya tersebar, tekan ikon ↻ di baris siswa untuk
-  **menerbitkan ulang**. Kartu lama langsung tidak berlaku.
-
-### Aturan metode absensi
-
-Pada halaman yang sama, tiap siswa dapat ditetapkan metode kehadiran wajibnya:
-
-| Pengaturan | Artinya |
-|---|---|
-| **Bebas** (bawaan) | Semua metode diperbolehkan |
-| **Wajib GPS** | Hanya absensi lokasi yang diterima |
-| **Wajib QR** | Hanya pemindaian kode sesi yang diterima |
-
-Berguna untuk membedakan perlakuan: mahasiswa kelas karyawan yang kuliah daring
-diwajibkan GPS, sementara mahasiswa reguler cukup memindai QR di kelas.
-
-Gunakan dropdown *Terapkan ke semua…* untuk menyetel satu kelas sekaligus,
-lalu tekan **Simpan Aturan**.
-
-> Aturan ini hanya mengikat status **Hadir**. Pengajuan **Sakit** dan **Izin**
-> dengan lampiran bukti tetap dapat dilakukan siswa mana pun — aturan ini soal
-> cara *membuktikan kehadiran*, bukan soal melaporkan ketidakhadiran.
-
 ---
 
 # E. Migrasi dari v1.1
@@ -377,10 +250,9 @@ Buka spreadsheet database Anda → **File → Make a copy**. Beri nama
 Di proyek Apps Script yang **sudah ada** (jangan buat proyek baru — Script
 Properties di dalamnya menyimpan ID spreadsheet dan folder Anda):
 
-1. Timpa isi `Kode` dengan **`Kode.gs` v2.1**
-2. Timpa isi `Modul` dengan **`Modul.gs` v2.1**
-3. **Tambahkan** berkas baru `Ujian` dan tempel **`Ujian.gs`** (modul ujian v2.1)
-4. **Hapus** empat berkas HTML: `Index`, `Stylesheet`, `JavaScript`, `Pages`
+1. Timpa isi `Kode` dengan **`Kode.gs` v2.0**
+2. Timpa isi `Modul` dengan **`Modul.gs` v2.0**
+3. **Hapus** empat berkas HTML: `Index`, `Stylesheet`, `JavaScript`, `Pages`
    (klik ⋮ di sebelah nama berkas → Delete)
 
 > Keempat berkas itu kini dilayani GitHub Pages. Membiarkannya tidak
@@ -394,14 +266,6 @@ Berbeda dengan instalasi baru, di sini menjalankannya ulang **aman dan
 dianjurkan**: fungsi ini mengenali environment yang sudah ada, hanya menambahkan
 sheet atau kolom baru lewat migrasi otomatis (`migrasiHeader`), dan **tidak
 menghapus data lama**.
-
-Pada upgrade ke v2.1, langkah ini akan:
-- Membuat 5 sheet baru: `Bank_Soal`, `Ujian`, `Ujian_Soal`, `Ujian_Sesi`, `Ujian_Jawaban`
-- Menambahkan kolom `QRToken` dan `MetodeAbsen` ke sheet `Siswa_Mahasiswa`
-- Menerbitkan kartu QR untuk seluruh siswa yang sudah ada, dan menyetel metode
-  absensi mereka ke **Bebas**
-
-Jumlah kartu yang diterbitkan tercetak di **Execution log**.
 
 ### E4. Deploy versi baru
 **Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy**
